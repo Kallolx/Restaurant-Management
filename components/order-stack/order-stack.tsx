@@ -1,4 +1,17 @@
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLanguage } from "@/providers/language-provider";
+import { OrderCard } from "./order-card";
+
 export function OrderStack() {
+  const { t } = useLanguage();
+  
+  // Mock data for now
+  const newOrders = [];
+  const processingOrders = [];
+  const readyOrders = [];
+  const completedOrders = [];
+
   return (
     <div className="h-full w-full">
       <div className="grid grid-cols-4 gap-4 h-full">

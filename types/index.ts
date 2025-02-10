@@ -1,5 +1,5 @@
-import { LucideProps } from "lucide-react";
-import { FC, ForwardRefExoticComponent, RefAttributes, SVGProps } from "react";
+import { LucideProps, LucideIcon } from "lucide-react";
+import { FC, ForwardRefExoticComponent, RefAttributes, SVGProps, FunctionComponent } from "react";
 
 export type SiteConfig = {
   name: string;
@@ -16,14 +16,10 @@ export type SiteConfig = {
   ogImage: string;
 };
 
-export type SidebarNavItem = {
-  id: number | string;
+export interface SidebarNavItem {
+  id: number;
+  icon: FC<SVGProps<SVGElement>> | LucideIcon;
   label: string;
   link: string;
-  icon:
-    | FC<SVGProps<SVGElement>>
-    | ForwardRefExoticComponent<
-        Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>
-      >;
-  pathnameMatcher: Array<string>;
-};
+  pathnameMatcher: string[];
+}

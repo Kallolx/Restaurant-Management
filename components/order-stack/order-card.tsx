@@ -1,8 +1,25 @@
-import { useLanguage } from "@/hooks/useLanguage";
-import { Card, CardHeader, CardTitle, CardContent, Badge } from "@/components/ui/card";
+import { useLanguage } from "@/providers/language-provider";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Order, OrderStatus } from "@/types/order";
 
 export function OrderCard({ order }: { order: Order }) {
   const { t } = useLanguage();
+  
+  const getStatusTranslation = (status: OrderStatus | undefined): string => {
+    switch (status) {
+      case "new":
+        return "New";
+      case "processing":
+        return "Processing";
+      case "ready":
+        return "Ready";
+      case "completed":
+        return "Completed";
+      default:
+        return "New"; // Default to "New" if status is undefined
+    }
+  };
   
   return (
     <div className="mb-4 last:mb-0">
@@ -18,7 +35,7 @@ export function OrderCard({ order }: { order: Order }) {
               </p>
             </div>
             <Badge variant={order.status === "new" ? "default" : "secondary"}>
-              {t(order.status)}
+              {t(getStatusTranslation(order.status))}
             </Badge>
           </div>
         </CardHeader>
@@ -28,7 +45,7 @@ export function OrderCard({ order }: { order: Order }) {
               <span className="text-muted-foreground dark:text-muted-foreground">
                 {t("Table Number")}:
               </span>
-              <span className="font-medium">{order.tableNumber}</span>
+              <span className="font-medium">{order.tableNo}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground dark:text-muted-foreground">

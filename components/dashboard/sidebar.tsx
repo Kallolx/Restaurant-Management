@@ -4,11 +4,6 @@ import { SidebarNavItem } from "@/types";
 import { Moon, Sun } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import Logo from "@/public/assets/logo.png";
-import LogoutIcon from "@/public/assets/sidebar/Logout.svg";
-import SettingsIcon from "@/public/assets/sidebar/Settings.svg";
-import SupportIcon from "@/public/assets/sidebar/Support.svg";
-
 import { useRBAC } from "@/hooks/useRBAC";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +12,13 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/providers/language-provider";
 import { useLogout } from "@/services/hooks/use-auth";
+
+// Import logo as an image
+import LogoImage from "@/public/assets/logo.png";
+// Import SVG as React components
+import LogoutIcon from "@/public/assets/sidebar/Logout.svg";
+import SettingsIcon from "@/public/assets/sidebar/Settings.svg";
+import SupportIcon from "@/public/assets/sidebar/Support.svg";
 
 const footerNavItems: SidebarNavItem[] = [
   {
@@ -117,7 +119,7 @@ function NavLinkItem({ sidebarItem }: { sidebarItem: SidebarNavItem }) {
   const { icon: Icon, label, link, pathnameMatcher } = sidebarItem;
 
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (sidebarItem.label === "Log Out") {
+    if (label === t("Log Out")) {
       e.preventDefault();
       try {
         localStorage.removeItem("auth");
@@ -143,7 +145,7 @@ function NavLinkItem({ sidebarItem }: { sidebarItem: SidebarNavItem }) {
           }
         )}
       >
-        <Icon className="size-6 fill-current dark:fill-white dark:text-white" fill="currentColor" />
+        {Icon && <Icon className="size-6 fill-current dark:fill-white dark:text-white" />}
         <span className="text-sm font-medium font-bangla">{label}</span>
       </Link>
     </li>
@@ -191,7 +193,12 @@ function SidebarLogo() {
   return (
     <li className="relative">
       <div className="h-11 py-1.5 flex items-center">
-        <Image className="w-full h-auto" src={Logo} alt="logo" priority />
+        <Image 
+          src={LogoImage} 
+          alt="logo" 
+          priority 
+          className="w-full h-auto"
+        />
       </div>
     </li>
   );

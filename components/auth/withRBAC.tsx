@@ -11,45 +11,44 @@ interface RBACProps {
   }>;
 }
 
-export const withRBAC = <P extends object>(
-  WrappedComponent: ComponentType<P>,
-  { requiredPermissions }: RBACProps
-) => {
-  return function WithRBACWrapper(props: P) {
-    const { can } = useRBAC();
+export function withRBAC<T extends object>(
+  WrappedComponent: ComponentType<T>,
+  requiredRole?: string
+) {
+  return function WithRBACComponent(props: T) {
+    const { data: authState } = useAuthState();
     const router = useRouter();
     const { toast } = useToast();
-    const { data: authState } = useAuthState();
-
-    const hasRequiredPermissions = requiredPermissions.every(({ action, subject }) =>
-      can(action, subject)
-    );
 
     useEffect(() => {
-      if (!authState?.isAuthenticated) {
-        router.push("/auth/login");
+      // Check if user is not authenticated
+      if (!authState?.user) {
+        router.push("/login");
         toast({
           title: "Authentication Required",
-          description: "Please login to access this page",
+          description: "Please log in to access this page.",
           variant: "destructive",
         });
         return;
       }
 
-      if (!hasRequiredPermissions) {
+      // Check if user has required role
+      if (requiredRole && authState.role !== requiredRole) {
         router.push("/dashboard");
         toast({
           title: "Access Denied",
-          description: "You don't have permission to access this page",
+          description: "You don't have permission to access this page.",
           variant: "destructive",
         });
+        return;
       }
-    }, [hasRequiredPermissions, router, authState?.isAuthenticated, toast]);
+    }, [authState, router]);
 
-    if (!authState?.isAuthenticated || !hasRequiredPermissions) {
+    // If no auth state or wrong role, don't render anything
+    if (!authState?.user || (requiredRole && authState.role !== requiredRole)) {
       return null;
     }
 
     return <WrappedComponent {...props} />;
   };
-};
+}

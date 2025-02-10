@@ -15,30 +15,29 @@ export interface BaseOrderType {
   total?: number;
   totalItems?: number;
   totalPrice?: number;
-  status?: string;
-
+  status?: OrderStatus;
   tableNo?: number | string;
   customerName?: string;
   contactInfo?: string;
   specialRequest?: string;
-
   shopName?: string;
   tokenNumber?: string;
   tel?: string;
   vat?: number;
   subtotal?: number;
-
   deliveryInfo?: {
     name?: string;
     phone?: string;
     address?: string;
   };
-
   time?: string;
   isReady?: boolean;
   customerContact?: string;
   deliveryAddress?: string;
+  orderTime?: string;
 }
+
+export type OrderStatus = "new" | "processing" | "ready" | "completed";
 
 export type Order = BaseOrderType;
 
