@@ -1,0 +1,9 @@
+/* Style for the previous row's bottom border when next row has an offer */
+tr[data-has-offer="false"] + tr[data-has-offer="true"] {
+  border-top-color: rgb(239 68 68); /* red-500 */
+}
+
+/* Style for the previous row's bottom border */
+tr[data-has-offer="false"]:has(+ tr[data-has-offer="true"]) {
+  border-bottom-color: rgb(239 68 68); /* red-500 */
+}
