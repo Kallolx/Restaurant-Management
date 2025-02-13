@@ -69,6 +69,54 @@ export const translations = {
     "Food": "Food",
     "Beverages": "Beverages",
     "Out of Stock": "Out of Stock",
+    
+    // QR Code Section
+    "Menu QR Code": "Menu QR Code",
+    "Download QR Code": "Download QR Code",
+    "Scan this QR code to view the restaurant menu": "Scan this QR code to view the restaurant menu",
+    
+    // Settings Page
+    "Manage your restaurant settings and preferences": "Manage your restaurant settings and preferences",
+    "Appearance": "Appearance",
+    "Save all changes": "Save all changes",
+    
+    // Theme Selector
+    "Theme": "Theme",
+    "Choose your preferred theme for the dashboard": "Choose your preferred theme for the dashboard",
+    
+    // Profile Information
+    "Profile Information": "Profile Information",
+    "Upload Photo": "Upload Photo",
+    "Full Name": "Full Name",
+    "Email": "Email",
+    "Phone": "Phone",
+    "Role": "Role",
+    "Password": "Password",
+    
+    // Restaurant Settings
+    "Restaurant Settings": "Restaurant Settings",
+    "Restaurant Name": "Restaurant Name",
+    "Table Capacity": "Table Capacity",
+    "Restaurant Logo": "Restaurant Logo",
+    "Upload Logo": "Upload Logo",
+    
+    // Subscription
+    "Subscription": "Subscription",
+    "Current Plan": "Current Plan",
+    "Upgrade Plan": "Upgrade Plan",
+    "Next Billing": "Next Billing",
+    "View History": "View History",
+    
+    // Subscription Plan Details
+    "Subscription Plan Details": "Subscription Plan Details",
+    "Current plan": "Current plan",
+    "Start Plan": "Start Plan",
+    "Pay bill": "Pay bill",
+    "Previous bills": "Previous bills",
+    "Add Tax": "Add Tax",
+    "Add Vat": "Add Vat",
+    "View all plans and features on the subscription page": "View all plans and features on the subscription page",
+    "Save Profile Information": "Save Profile Information",
   },
   bn: {
     // Dashboard
@@ -140,5 +188,53 @@ export const translations = {
     "Food": "খাবার",
     "Beverages": "পানীয়",
     "Out of Stock": "স্টক শেষ",
+    
+    // QR Code Section
+    "Menu QR Code": "মেনু কিউআর কোড",
+    "Download QR Code": "কিউআর কোড ডাউনলোড করুন",
+    "Scan this QR code to view the restaurant menu": "রেস্টুরেন্ট মেনু দেখতে এই কিউআর কোড স্ক্যান করুন",
+    
+    // Settings Page
+    "Manage your restaurant settings and preferences": "আপনার রেস্টুরেন্টের সেটিংস এবং পছন্দগুলি পরিচালনা করুন",
+    "Appearance": "অ্যাপিয়ারেন্স",
+    "Save all changes": "সব পরিবর্তন সংরক্ষণ করুন",
+    
+    // Theme Selector
+    "Theme": "থিম",
+    "Choose your preferred theme for the dashboard": "ড্যাশবোর্ডের জন্য আপনার পছন্দের থিম বেছে নিন",
+    
+    // Profile Information
+    "Profile Information": "প্রোফাইল তথ্য",
+    "Upload Photo": "ছবি আপলোড করুন",
+    "Full Name": "পুরো নাম",
+    "Email": "ইমেইল",
+    "Phone": "ফোন",
+    "Role": "ভূমিকা",
+    "Password": "পাসওয়ার্ড",
+    
+    // Restaurant Settings
+    "Restaurant Settings": "রেস্টুরেন্ট সেটিংস",
+    "Restaurant Name": "রেস্টুরেন্টের নাম",
+    "Table Capacity": "টেবিল ক্যাপাসিটি",
+    "Restaurant Logo": "রেস্টুরেন্টের লোগো",
+    "Upload Logo": "লোগো আপলোড করুন",
+    
+    // Subscription
+    "Subscription": "সাবস্ক্রিপশন",
+    "Current Plan": "বর্তমান প্ল্যান",
+    "Upgrade Plan": "আপগ্রেড প্ল্যান",
+    "Next Billing": "পরবর্তী বিলিং",
+    "View History": "ইতিহাস দেখুন",
+    
+    // Subscription Plan Details
+    "Subscription Plan Details": "সাবস্ক্রিপশন প্ল্যান বিবরণ",
+    "Current plan": "বর্তমান প্ল্যান",
+    "Start Plan": "প্ল্যান শুরু",
+    "Pay bill": "বিল পরিশোধ করুন",
+    "Previous bills": "পূর্ববর্তী বিল",
+    "Add Tax": "ট্যাক্স যোগ করুন",
+    "Add Vat": "ভ্যাট যোগ করুন",
+    "View all plans and features on the subscription page": "সাবস্ক্রিপশন পেজে সব প্ল্যান এবং ফিচার দেখুন",
+    "Save Profile Information": "প্রোফাইল তথ্য সংরক্ষণ করুন",
   }
 }; 

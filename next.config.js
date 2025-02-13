@@ -25,7 +25,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // Temporarily ignore ESLint errors during build
   },
-  swcMinify: true,
 }
 
 module.exports = nextConfig 

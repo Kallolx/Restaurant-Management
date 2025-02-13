@@ -1,6 +1,6 @@
 "use client";
 
-import QrCodeSection from "@/components/settings/qr-code-section";
+import { QRCodeSection } from "@/components/settings/qr-code-section";
 import SettingsForm from "@/components/settings/settings-form";
 import SubscriptionDetails from "@/components/settings/subscription-details";
 import ThemeSelector from "@/components/settings/theme-selector";
@@ -32,7 +32,7 @@ export default function SettingsPage() {
             <SubscriptionDetails />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ThemeSelector />
-              <QrCodeSection />
+              <QRCodeSection restaurantId={""} />
             </div>
           </div>
         </div>

@@ -53,12 +53,21 @@ export function NetIncome() {
     return <div>Error loading data</div>;
   }
 
-  const chartData = [
-    { name: "income", value: data?.total_paid_amount || 0, fill: "#007AFF" },
-    { name: "expense", value: data?.total_expenses || 0, fill: "#FF3B30" },
-  ];
-
+  // Ensure we have non-zero values for the chart
   const totalIncome = data?.total_paid_amount || 0;
+  const totalExpense = data?.total_expenses || 0;
+  const hasData = totalIncome > 0 || totalExpense > 0;
+
+  // If there's no data, provide default minimum values to show the chart
+  const chartData = hasData
+    ? [
+        { name: "income", value: totalIncome || 1, fill: "#007AFF" },
+        { name: "expense", value: totalExpense || 1, fill: "#FF3B30" },
+      ]
+    : [
+        { name: "income", value: 1, fill: "#007AFF" },
+        { name: "expense", value: 1, fill: "#FF3B30" },
+      ];
 
   return (
     <Card className="w-full px-4 py-4">
@@ -66,7 +75,7 @@ export function NetIncome() {
         <CardTitle className="text-xl font-medium">Net Income</CardTitle>
         <TimeRangeSelect onChange={handleDateRangeChange} />
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent className="p-0">
         <SkeletonWrapper isLoading={isLoading}>
           <ChartContainer
             config={chartConfig}
@@ -119,10 +128,10 @@ export function NetIncome() {
           </ChartContainer>
         </SkeletonWrapper>
       </CardContent>
-      <CardFooter className="flex-row gap-2 text-sm w-full justify-between pb-2">
-        <div className="flex flex-col gap-2.5 items-start justify-between ">
+      <CardFooter className="grid grid-cols-2 gap-4 p-0 pt-4">
+        <div className="flex flex-col gap-2.5 items-start justify-between">
           <h3 className="font-medium text-xl">
-            <CurrencyAmount amount={data?.total_paid_amount || 0} />
+            <CurrencyAmount amount={totalIncome} />
           </h3>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-blue-500" />
@@ -133,7 +142,7 @@ export function NetIncome() {
         </div>
         <div className="flex flex-col gap-2.5 items-start justify-between">
           <h3 className="font-medium text-xl">
-            <CurrencyAmount amount={data?.total_expenses || 0} />
+            <CurrencyAmount amount={totalExpense} />
           </h3>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-red-500" />
