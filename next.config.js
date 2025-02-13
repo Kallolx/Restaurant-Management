@@ -8,6 +8,17 @@ const nextConfig = {
 
     return config;
   },
+  images: {
+    domains: ['api.hishabx.io'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.hishabx.io',
+        port: '',
+        pathname: '/media/**',
+      },
+    ],
+  },
 }
 
 module.exports = nextConfig 

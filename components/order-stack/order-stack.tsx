@@ -1,16 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLanguage } from "@/providers/language-provider";
+import { Order } from "@/types/order";
 import { OrderCard } from "./order-card";
 
 export function OrderStack() {
   const { t } = useLanguage();
   
   // Mock data for now
-  const newOrders = [];
-  const processingOrders = [];
-  const readyOrders = [];
-  const completedOrders = [];
+  const newOrders: Order[] = [];
+  const processingOrders: Order[] = [];
+  const readyOrders: Order[] = [];
+  const completedOrders: Order[] = [];
 
   return (
     <div className="h-full w-full">

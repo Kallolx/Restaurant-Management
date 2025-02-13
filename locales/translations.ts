@@ -63,6 +63,12 @@ export const translations = {
     "Order Time": "Order Time",
     "Customer Name": "Customer Name",
     "Table Number": "Table Number",
+    
+    // Public Menu
+    "Restaurant Menu": "Restaurant Menu",
+    "Food": "Food",
+    "Beverages": "Beverages",
+    "Out of Stock": "Out of Stock",
   },
   bn: {
     // Dashboard
@@ -128,5 +134,11 @@ export const translations = {
     "Order Time": "অর্ডার সময়",
     "Customer Name": "কাস্টমারের নাম",
     "Table Number": "টেবিল নম্বর",
+    
+    // Public Menu
+    "Restaurant Menu": "রেস্টুরেন্ট মেনু",
+    "Food": "খাবার",
+    "Beverages": "পানীয়",
+    "Out of Stock": "স্টক শেষ",
   }
 }; 
