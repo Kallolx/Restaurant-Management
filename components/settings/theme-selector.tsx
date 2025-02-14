@@ -9,6 +9,9 @@ import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { BackgroundSettingsModal } from "./background-settings-modal";
 import type { BackgroundSettings, BackgroundTheme } from "@/types/settings";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { apiClient } from "@/services/apiClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 const themes: BackgroundTheme[] = [
   {
@@ -37,6 +40,7 @@ export default function ThemeSelector() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [settings, setSettings] = useState<BackgroundSettings>({
     textColor: "white",
     opacity: 50,
@@ -45,34 +49,71 @@ export default function ThemeSelector() {
   const [isUploading, setIsUploading] = useState(false);
   const [customThemes, setCustomThemes] = useState<{ id: string; url: string }[]>([]);
 
+  // Fetch current settings
+  const { data: currentSettings } = useQuery({
+    queryKey: ['restaurant-settings'],
+    queryFn: async () => {
+      const response = await apiClient.get('/restaurants/settings/');
+      return response.data;
+    }
+  });
+
+  // Update settings mutation
+  const updateSettings = useMutation({
+    mutationFn: async (newSettings: BackgroundSettings) => {
+      const response = await apiClient.put('/restaurants/settings/', {
+        background_settings: newSettings
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: t("Settings updated"),
+        description: t("Your menu background settings have been saved"),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t("Update failed"),
+        description: t("Failed to update settings. Please try again."),
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Upload custom theme mutation
+  const uploadTheme = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiClient.post('/restaurants/wallpaper/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const newCustomTheme = { id: `custom-${Date.now()}`, url: data.url };
+      setCustomThemes(prev => [...prev.slice(0, 1), newCustomTheme]);
+      setSettings(prev => ({ ...prev, selectedTheme: newCustomTheme.id }));
+      updateSettings.mutate({
+        ...settings,
+        selectedTheme: newCustomTheme.id
+      });
+      toast({
+        title: t("Theme uploaded"),
+        description: t("Your custom theme has been uploaded and applied"),
+      });
+    }
+  });
+
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
       setIsUploading(true);
       try {
-        // Here you would typically upload to your server/cloud storage
-        const formData = new FormData();
-        formData.append("file", file);
-        
-        // Simulating upload delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // For demo, we're using local URL
-        const imageUrl = URL.createObjectURL(file);
-        const newCustomTheme = { id: `custom-${Date.now()}`, url: imageUrl };
-        setCustomThemes(prev => [...prev.slice(0, 1), newCustomTheme]);
-        setSettings(prev => ({ ...prev, selectedTheme: newCustomTheme.id }));
-        
-        toast({
-          title: t("Theme uploaded successfully"),
-          description: t("Your custom theme has been applied to the menu"),
-        });
-      } catch (error) {
-        toast({
-          title: t("Upload failed"),
-          description: t("Please try again"),
-          variant: "destructive",
-        });
+        await uploadTheme.mutateAsync(file);
       } finally {
         setIsUploading(false);
       }
@@ -88,19 +129,42 @@ export default function ThemeSelector() {
     multiple: false
   });
 
-  const handleSaveSettings = (newSettings: BackgroundSettings) => {
+  const handleThemeClick = (themeId: string) => {
+    const newSettings = { ...settings, selectedTheme: themeId };
     setSettings(newSettings);
+    // For now, just show success message
     toast({
-      title: t("Theme settings updated"),
+      title: t("Theme updated"),
+      description: t("Your menu theme has been updated"),
+    });
+  };
+
+  const handleSaveSettings = async (newSettings: BackgroundSettings) => {
+    setSettings(newSettings);
+    setIsModalOpen(false);
+    // Show preview dialog after settings update
+    setShowPreviewDialog(true);
+  };
+
+  const handleApplySettings = () => {
+    // For now, just show success message
+    toast({
+      title: t("Settings updated"),
       description: t("Your menu background settings have been saved"),
     });
+    setShowPreviewDialog(false);
   };
 
   return (
     <>
       <Card>
         <CardHeader className="p-4 pb-0">
-          <CardTitle className="text-xl">{t("Menu Background Theme")}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl">{t("Menu Background Theme")}</CardTitle>
+            <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+              {t("Background settings")}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-4">
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 mb-4">
@@ -112,13 +176,7 @@ export default function ThemeSelector() {
                     ? "ring-2 ring-primary"
                     : "hover:ring-2 hover:ring-primary/50"
                 }`}
-                onClick={() => {
-                  setSettings(prev => ({ ...prev, selectedTheme: theme.id }));
-                  toast({
-                    title: t("Theme selected"),
-                    description: t("Your menu background has been updated"),
-                  });
-                }}
+                onClick={() => handleThemeClick(theme.id)}
               >
                 <img
                   src={theme.url}
@@ -145,18 +203,10 @@ export default function ThemeSelector() {
                       ${settings.selectedTheme === customTheme?.id ? "ring-2 ring-primary" : "hover:ring-2 hover:ring-primary/50"}
                       ${isUploading ? "opacity-50" : ""}
                     `}
+                    onClick={() => customTheme && handleThemeClick(customTheme.id)}
                   >
                     {customTheme ? (
-                      <div 
-                        className="relative w-full h-full"
-                        onClick={() => {
-                          setSettings(prev => ({ ...prev, selectedTheme: customTheme.id }));
-                          toast({
-                            title: t("Custom theme selected"),
-                            description: t("Your menu background has been updated"),
-                          });
-                        }}
-                      >
+                      <div className="relative w-full h-full">
                         <img
                           src={customTheme.url}
                           alt="Custom theme"
@@ -186,14 +236,6 @@ export default function ThemeSelector() {
               })}
             </div>
           </div>
-
-          <Button
-            variant="link"
-            className="mt-4 text-primary"
-            onClick={() => setIsModalOpen(true)}
-          >
-            {t("Background settings")}
-          </Button>
         </CardContent>
       </Card>
 
@@ -204,6 +246,49 @@ export default function ThemeSelector() {
         onSave={handleSaveSettings}
         themes={themes}
       />
+
+      {/* Settings Preview Dialog */}
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-md p-0">
+          <div className="flex flex-col h-[70vh]">
+            {/* Preview Content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="relative">
+                <img 
+                  src={themes.find(t => t.id === settings.selectedTheme)?.url || customThemes.find(t => t.id === settings.selectedTheme)?.url}
+                  alt="Theme preview"
+                  className="w-full h-full object-cover"
+                  style={{
+                    opacity: settings.opacity / 100,
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <p className={`text-${settings.textColor} text-xl font-medium`}>
+                    Sample Menu Text
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Fixed Bottom Buttons */}
+            <div className="p-4 bg-white border-t flex flex-col items-center gap-2">
+              <Button 
+                className="w-full max-w-md bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={handleApplySettings}
+              >
+                Set as background
+              </Button>
+              <Button
+                variant="ghost"
+                className="text-red-500 hover:text-red-600"
+                onClick={() => setShowPreviewDialog(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
