@@ -46,33 +46,38 @@ export function ReservationContent() {
 
   return (
     <div className="flex flex-col gap-6 mobile-md:gap-4">
-      <div className="flex-1 bg-background rounded-lg max-h-[calc(100vh-133px)] mobile-md:max-h-[calc(50vh-80px)] overflow-y-auto custom-scrollbar">
-        <h2 className="px-4 pt-4 pb-2 text-lg font-semibold bg-background sticky top-0 left-0 right-0 z-50">
-          Confirm Reservations
-        </h2>
-        <div className="p-4">
-          <ReservationList
-            reservations={pendingReservations}
-            onCancelClick={(reservation) => {
-              setSelectedReservation(reservation);
-              setIsCancelModalOpen(true);
-            }}
-            variant="pending"
-            showCancelButton
-          />
+      {/* Desktop: Side by side, Mobile: Stacked with Confirm on top */}
+      <div className="grid grid-cols-2 gap-6 mobile-md:grid-cols-1 mobile-md:gap-4">
+        {/* Confirm Reservations */}
+        <div className="bg-background rounded-lg max-h-[calc(100vh-133px)] mobile-md:max-h-[60vh] overflow-y-auto custom-scrollbar">
+          <h2 className="px-4 pt-4 pb-2 text-lg font-semibold bg-background sticky top-0 left-0 right-0 z-50 mobile-md:text-base">
+            Confirm Reservations
+          </h2>
+          <div className="p-4 mobile-md:p-3">
+            <ReservationList
+              reservations={pendingReservations}
+              onCancelClick={(reservation) => {
+                setSelectedReservation(reservation);
+                setIsCancelModalOpen(true);
+              }}
+              variant="pending"
+              showCancelButton
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="flex-1 bg-background rounded-lg max-h-[calc(100vh-133px)] mobile-md:max-h-[calc(50vh-80px)] overflow-y-auto custom-scrollbar">
-        <h2 className="px-4 pt-4 pb-2 text-lg font-semibold bg-background sticky top-0 left-0 right-0 z-50">
-          Completed Reservations
-        </h2>
-        <div className="p-4">
-          <ReservationList
-            reservations={completedReservations}
-            variant="completed"
-            showCompletedBadge
-          />
+        {/* Completed Reservations */}
+        <div className="bg-background rounded-lg max-h-[calc(100vh-133px)] mobile-md:max-h-[40vh] overflow-y-auto custom-scrollbar">
+          <h2 className="px-4 pt-4 pb-2 text-lg font-semibold bg-background sticky top-0 left-0 right-0 z-50 mobile-md:text-base">
+            Completed Reservations
+          </h2>
+          <div className="p-4 mobile-md:p-3">
+            <ReservationList
+              reservations={completedReservations}
+              variant="completed"
+              showCompletedBadge
+            />
+          </div>
         </div>
       </div>
 

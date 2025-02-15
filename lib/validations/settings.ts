@@ -1,11 +1,11 @@
 import * as z from "zod";
 
 export const profileFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   role: z.string().min(1, "Role is required"),
-  phone: z.string().regex(/^(\+88)?01[0-9]{9}$/, "Invalid Bangladeshi phone number"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  phone: z.string().min(1, "Phone number is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   avatar: z.string().optional(),
 });
 
@@ -13,10 +13,15 @@ export const restaurantSettingsSchema = z.object({
   tableCapacity: z.number().min(1, "Table capacity must be at least 1"),
   showName: z.boolean(),
   showLogo: z.boolean(),
-  restaurantName: z
-    .string()
-    .min(2, "Restaurant name must be at least 2 characters"),
+  restaurantName: z.string().min(1, "Restaurant name is required").optional(),
   logo: z.string().optional(),
+  addTax: z.boolean(),
+  taxPercentage: z.number().min(0).max(100).optional(),
+  addVat: z.boolean(),
+  vatPercentage: z.number().min(0).max(100).optional(),
+  menuWallpaper: z.string().optional(),
+  textColor: z.string(),
+  backgroundOpacity: z.number().min(0).max(100)
 });
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>;

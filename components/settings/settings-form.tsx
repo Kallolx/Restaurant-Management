@@ -23,15 +23,63 @@ import type {
 } from "@/types/settings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Pencil, Upload, User } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/services/apiClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsForm() {
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch current settings
+  const { data: currentSettings, isLoading } = useQuery({
+    queryKey: ['restaurant-settings'],
+    queryFn: async () => {
+      const response = await apiClient.get('/restaurants/settings/');
+      return response.data;
+    }
+  });
+
+  // Update settings mutation
+  const updateSettings = useMutation({
+    mutationFn: async (data: RestaurantSettingsValues) => {
+      const response = await apiClient.put('/restaurants/settings/update/', {
+        show_name: data.showName,
+        show_logo: data.showLogo,
+        restaurant_name: data.restaurantName,
+        restaurant_logo: data.logo || null,
+        add_tax: data.addTax,
+        tax_percentage: data.taxPercentage,
+        add_vat: data.addVat,
+        vat_percentage: data.vatPercentage,
+        table_capacity: data.tableCapacity,
+        menu_wallpaper: data.menuWallpaper,
+        text_color: data.textColor,
+        background_opacity: data.backgroundOpacity
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Settings Updated",
+        description: "Restaurant settings have been successfully updated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update restaurant settings. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Update error:', error);
+    }
+  });
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -48,13 +96,40 @@ export default function SettingsForm() {
   const restaurantForm = useForm<RestaurantSettingsValues>({
     resolver: zodResolver(restaurantSettingsSchema),
     defaultValues: {
-      tableCapacity: 25,
-      showName: true,
-      showLogo: true,
-      restaurantName: "Hungry Hub and Fast Food",
-      logo: "",
-    },
+      tableCapacity: currentSettings?.table_capacity || 25,
+      showName: currentSettings?.show_name || true,
+      showLogo: currentSettings?.show_logo || true,
+      restaurantName: currentSettings?.restaurant_name || "",
+      logo: currentSettings?.restaurant_logo || "",
+      addTax: currentSettings?.add_tax || false,
+      taxPercentage: currentSettings?.tax_percentage || 0,
+      addVat: currentSettings?.add_vat || false,
+      vatPercentage: currentSettings?.vat_percentage || 0,
+      menuWallpaper: currentSettings?.menu_wallpaper || "",
+      textColor: currentSettings?.text_color || "#FFFFFF",
+      backgroundOpacity: currentSettings?.background_opacity || 50
+    }
   });
+
+  // Update form when settings are loaded
+  useEffect(() => {
+    if (currentSettings) {
+      restaurantForm.reset({
+        tableCapacity: currentSettings.table_capacity,
+        showName: currentSettings.show_name,
+        showLogo: currentSettings.show_logo,
+        restaurantName: currentSettings.restaurant_name,
+        logo: currentSettings.restaurant_logo,
+        addTax: currentSettings.add_tax,
+        taxPercentage: currentSettings.tax_percentage,
+        addVat: currentSettings.add_vat,
+        vatPercentage: currentSettings.vat_percentage,
+        menuWallpaper: currentSettings.menu_wallpaper,
+        textColor: currentSettings.text_color,
+        backgroundOpacity: currentSettings.background_opacity
+      });
+    }
+  }, [currentSettings]);
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -90,12 +165,7 @@ export default function SettingsForm() {
   };
 
   const onRestaurantSubmit = (data: RestaurantSettingsValues) => {
-    // Here you would typically send the data to your backend
-    console.log("Restaurant settings submitted:", data);
-    toast({
-      title: "Restaurant Settings Updated",
-      description: "Your restaurant settings have been successfully updated.",
-    });
+    updateSettings.mutate(data);
   };
 
   return (
@@ -283,8 +353,94 @@ export default function SettingsForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="Restaurant name" />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={restaurantForm.control}
+              name="addTax"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Add Tax</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {restaurantForm.watch("addTax") && (
+              <FormField
+                control={restaurantForm.control}
+                name="taxPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex justify-between items-center">
+                      <FormLabel>Tax Percentage</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          className="w-20"
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={restaurantForm.control}
+              name="addVat"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Add VAT</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {restaurantForm.watch("addVat") && (
+              <FormField
+                control={restaurantForm.control}
+                name="vatPercentage"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex justify-between items-center">
+                      <FormLabel>VAT Percentage</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          className="w-20"
+                        />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -346,8 +502,13 @@ export default function SettingsForm() {
               </div>
             )}
 
-            <Button variant="primary" type="submit" className="w-full">
-              Save Restaurant Settings
+            <Button 
+              variant="primary" 
+              type="submit" 
+              className="w-full"
+              disabled={updateSettings.isPending}
+            >
+              {updateSettings.isPending ? "Saving..." : "Save Restaurant Settings"}
             </Button>
           </form>
         </Form>
