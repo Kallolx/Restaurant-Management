@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { BackgroundSettingsModal } from "./background-settings-modal";
 import type { BackgroundSettings, BackgroundTheme } from "@/types/settings";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { apiClient } from "@/services/apiClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
@@ -41,13 +41,22 @@ export default function ThemeSelector() {
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
-  const [settings, setSettings] = useState<BackgroundSettings>({
-    textColor: "white",
-    opacity: 50,
-    selectedTheme: themes[0].id,
+  const [settings, setSettings] = useState<BackgroundSettings>(() => {
+    // Initialize from localStorage or use defaults
+    if (typeof window !== 'undefined') {
+      const savedSettings = localStorage.getItem('menuSettings');
+      if (savedSettings) {
+        return JSON.parse(savedSettings);
+      }
+    }
+    return {
+      textColor: "white",
+      opacity: 50,
+      selectedTheme: themes[0].url,
+    };
   });
   const [isUploading, setIsUploading] = useState(false);
-  const [customThemes, setCustomThemes] = useState<{ id: string; url: string }[]>([]);
+  const [customThemes, setCustomThemes] = useState<BackgroundTheme[]>([]);
 
   // Fetch current settings
   const { data: currentSettings } = useQuery({
@@ -86,7 +95,7 @@ export default function ThemeSelector() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await apiClient.post('/restaurants/wallpaper/', formData, {
+      const response = await apiClient.post('/wallpapers/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -94,16 +103,22 @@ export default function ThemeSelector() {
       return response.data;
     },
     onSuccess: (data) => {
-      const newCustomTheme = { id: `custom-${Date.now()}`, url: data.url };
+      const newCustomTheme: BackgroundTheme = {
+        id: `custom-${Date.now()}`,
+        url: data.url,
+        alt: "Custom uploaded theme"
+      };
       setCustomThemes(prev => [...prev.slice(0, 1), newCustomTheme]);
-      setSettings(prev => ({ ...prev, selectedTheme: newCustomTheme.id }));
-      updateSettings.mutate({
-        ...settings,
-        selectedTheme: newCustomTheme.id
-      });
+      setSettings(prev => ({ ...prev, selectedTheme: newCustomTheme.url }));
+      // Show preview dialog after upload
+      setShowPreviewDialog(true);
+    },
+    onError: (error) => {
+      console.error('Upload error:', error);
       toast({
-        title: t("Theme uploaded"),
-        description: t("Your custom theme has been uploaded and applied"),
+        title: t("Upload failed"),
+        description: t("Failed to upload custom theme. Please try again."),
+        variant: "destructive",
       });
     }
   });
@@ -129,17 +144,19 @@ export default function ThemeSelector() {
     multiple: false
   });
 
-  const handleThemeClick = (themeId: string) => {
-    const newSettings = { ...settings, selectedTheme: themeId };
+  const handleThemeClick = (theme: BackgroundTheme) => {
+    const newSettings = { ...settings, selectedTheme: theme.url };
     setSettings(newSettings);
-    // For now, just show success message
-    toast({
-      title: t("Theme updated"),
-      description: t("Your menu theme has been updated"),
-    });
+    // Save to localStorage
+    localStorage.setItem('menuSettings', JSON.stringify(newSettings));
+    // Trigger storage event for other components
+    window.dispatchEvent(new Event('storage'));
+    
+    // Show preview dialog after theme selection
+    setShowPreviewDialog(true);
   };
 
-  const handleSaveSettings = async (newSettings: BackgroundSettings) => {
+  const handleSaveSettings = (newSettings: BackgroundSettings) => {
     setSettings(newSettings);
     setIsModalOpen(false);
     // Show preview dialog after settings update
@@ -147,7 +164,11 @@ export default function ThemeSelector() {
   };
 
   const handleApplySettings = () => {
-    // For now, just show success message
+    // Save settings to localStorage
+    localStorage.setItem('menuSettings', JSON.stringify(settings));
+    // Trigger storage event for other components
+    window.dispatchEvent(new Event('storage'));
+    
     toast({
       title: t("Settings updated"),
       description: t("Your menu background settings have been saved"),
@@ -172,11 +193,11 @@ export default function ThemeSelector() {
               <div
                 key={theme.id}
                 className={`aspect-video rounded-lg overflow-hidden cursor-pointer transition-all ${
-                  settings.selectedTheme === theme.id
+                  settings.selectedTheme === theme.url
                     ? "ring-2 ring-primary"
                     : "hover:ring-2 hover:ring-primary/50"
                 }`}
-                onClick={() => handleThemeClick(theme.id)}
+                onClick={() => handleThemeClick(theme)}
               >
                 <img
                   src={theme.url}
@@ -200,10 +221,10 @@ export default function ThemeSelector() {
                     className={`
                       aspect-video rounded-lg overflow-hidden cursor-pointer transition-all
                       ${customTheme ? '' : 'border-2 border-dashed'}
-                      ${settings.selectedTheme === customTheme?.id ? "ring-2 ring-primary" : "hover:ring-2 hover:ring-primary/50"}
+                      ${settings.selectedTheme === customTheme?.url ? "ring-2 ring-primary" : "hover:ring-2 hover:ring-primary/50"}
                       ${isUploading ? "opacity-50" : ""}
                     `}
-                    onClick={() => customTheme && handleThemeClick(customTheme.id)}
+                    onClick={() => customTheme && handleThemeClick(customTheme)}
                   >
                     {customTheme ? (
                       <div className="relative w-full h-full">
@@ -249,29 +270,114 @@ export default function ThemeSelector() {
 
       {/* Settings Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-        <DialogContent className="max-w-md p-0">
-          <div className="flex flex-col h-[70vh]">
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <div className="flex flex-col h-[80vh] relative">
+            <div className="p-4 border-b bg-white z-20">
+              <DialogTitle className="text-lg font-medium">
+                {t("Preview Menu Background")}
+              </DialogTitle>
+            </div>
+            
             {/* Preview Content */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="relative">
-                <img 
-                  src={themes.find(t => t.id === settings.selectedTheme)?.url || customThemes.find(t => t.id === settings.selectedTheme)?.url}
-                  alt="Theme preview"
-                  className="w-full h-full object-cover"
-                  style={{
-                    opacity: settings.opacity / 100,
-                  }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className={`text-${settings.textColor} text-xl font-medium`}>
-                    Sample Menu Text
-                  </p>
+            <div className="flex-1 overflow-y-auto relative">
+              {/* Background Theme - Now contained within the dialog */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{
+                  backgroundImage: `url(${settings.selectedTheme})`,
+                  opacity: settings.opacity / 100,
+                }}
+              />
+
+              {/* Content Container */}
+              <div className="relative z-10 min-h-full">
+                {/* Header */}
+                <div className="sticky top-0 z-20">
+                  <div className="bg-white/90 px-4 py-3 flex items-center justify-between shadow-md">
+                    <div className="flex items-center gap-2">
+                      <img src="/logo.svg" alt="HungryHub" className="h-8 w-8" />
+                      <div>
+                        <h1 className="font-bold text-sm">HungryHub</h1>
+                        <p className="text-xs text-gray-500">Online Food Menu</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Menu Content */}
+                <div className="p-4">
+                  <div className="space-y-6">
+                    {/* Categories */}
+                    {[
+                      {
+                        name: "Popular Items",
+                        items: [
+                          {
+                            name: "Beef Burger",
+                            description: "Premium beef patty with fresh vegetables",
+                            price: 220,
+                            image: "/menu-items/burger.jpg"
+                          },
+                          {
+                            name: "Chicken Pizza",
+                            description: "Wood-fired pizza with grilled chicken",
+                            price: 450,
+                            image: "/menu-items/pizza.jpg"
+                          }
+                        ]
+                      },
+                      {
+                        name: "Main Course",
+                        items: [
+                          {
+                            name: "Grilled Salmon",
+                            description: "Fresh salmon with herbs and lemon",
+                            price: 650,
+                            image: "/menu-items/salmon.jpg"
+                          },
+                          {
+                            name: "Beef Steak",
+                            description: "Premium cut with mushroom sauce",
+                            price: 850,
+                            image: "/menu-items/steak.jpg"
+                          }
+                        ]
+                      }
+                    ].map((category, index) => (
+                      <div key={category.name}>
+                        <h3 className={`text-base font-medium bg-orange-400 text-${settings.textColor} px-2 py-1 rounded-lg mb-3 
+                          ${index % 2 === 0 ? 'w-1/2' : 'w-1/2 ml-auto text-right'}`}>
+                          {category.name}
+                        </h3>
+                        <div className="space-y-3">
+                          {category.items.map((item) => (
+                            <div key={item.name} className="flex items-center gap-3 bg-white/90 p-3 rounded-lg">
+                              <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                                <img 
+                                  src={item.image} 
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium text-sm truncate">{item.name}</h3>
+                                <p className="text-xs text-gray-500 line-clamp-2">
+                                  {item.description}
+                                </p>
+                                <span className="font-bold text-sm">৳ {item.price}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Fixed Bottom Buttons */}
-            <div className="p-4 bg-white border-t flex flex-col items-center gap-2">
+            <div className="p-4 bg-white border-t flex flex-col items-center gap-2 z-20">
               <Button 
                 className="w-full max-w-md bg-blue-500 hover:bg-blue-600 text-white"
                 onClick={handleApplySettings}

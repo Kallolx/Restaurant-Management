@@ -94,49 +94,32 @@ export default function CreateOrderModal({
           <div className="flex flex-col bg-main-background w-screen h-screen">
             {/* Header */}
             <DialogTitle className="bg-background border-b">
-              <div className="p-4 sm:p-6">
+              <div className="p-4 mobile-md:p-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-medium">
+                    <h2 className="text-xl font-medium mobile-md:text-lg">
                       Add Customer Order
                     </h2>
-                    <p className="text-sm font-normal text-muted-foreground">
+                    <p className="text-sm font-normal text-muted-foreground mobile-md:text-xs">
                       Fill up the form below to place an order
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-5 w-full sm:w-auto">
+                  <div className="w-full sm:w-auto">
                     <Tabs
+                      defaultValue="dine-in"
                       value={orderType}
-                      onValueChange={(value) =>
-                        setOrderType(value as OrderType)
-                      }
-                      className="w-full sm:w-auto"
+                      onValueChange={(value) => setOrderType(value as OrderType)}
+                      className="w-full"
                     >
-                      <TabsList className="flex items-center justify-between">
-                        <TabsTrigger value="dine-in">
-                          Dine-in
-                          <span className="mobile-sm:hidden">Order</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="takeaway">
-                          Takeaway
-                          <span className="mobile-sm:hidden">Order</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="home-delivery">
-                          Home delivery
-                          <span className="mobile-sm:hidden">Order</span>
+                      <TabsList className="grid w-full grid-cols-3 h-9 mobile-md:h-8">
+                        <TabsTrigger value="dine-in" className="text-sm mobile-md:text-xs">Dine in</TabsTrigger>
+                        <TabsTrigger value="takeaway" className="text-sm mobile-md:text-xs">Takeaway</TabsTrigger>
+                        <TabsTrigger value="home-delivery" className="text-sm mobile-md:text-xs">
+                          Home Delivery
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onOpenChange(false)}
-                      className="opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground border border-border rounded-full flex p-4 items-center justify-center"
-                    >
-                      <X className="h-6 w-6" />
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -145,12 +128,12 @@ export default function CreateOrderModal({
             {/* Content */}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr,400px] h-[calc(100vh-101px)] overflow-hidden">
               {/* Left Section */}
-              <div className="overflow-auto p-4 mobile-md:pb-16">
+              <div className="overflow-auto p-4 mobile-md:p-3 mobile-md:pb-20">
                 <div className="space-y-4">
-                  <div className="bg-background rounded-lg border p-6">
+                  <div className="bg-background rounded-lg border p-6 mobile-md:p-4">
                     <OrderDetails orderType={orderType} />
                   </div>
-                  <div className="bg-background rounded-lg border p-6">
+                  <div className="bg-background rounded-lg border p-6 mobile-md:p-4">
                     <MenuGrid
                       selectedItems={selectedItems.map((item) => item.id)}
                       onItemSelect={handleItemSelect}
@@ -170,15 +153,17 @@ export default function CreateOrderModal({
             </div>
 
             {/* Mobile Cart Button */}
-            <div className="sm:hidden fixed bottom-0 h-16 left-0 right-0 bg-background border-t flex items-center justify-center px-4">
-              <Button
-                className="w-full bg-primary"
-                onClick={() => setShowMobileCart(true)}
-                variant={"primary"}
-              >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                View Cart ({selectedItems.length} items)
-              </Button>
+            <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-background border-t">
+              <div className="p-4 mobile-md:p-3">
+                <Button
+                  className="w-full bg-primary h-12 mobile-md:h-10 text-base mobile-md:text-sm"
+                  onClick={() => setShowMobileCart(true)}
+                  variant="primary"
+                >
+                  <ShoppingCart className="mr-2 h-5 w-5 mobile-md:h-4 mobile-md:w-4" />
+                  View Cart ({selectedItems.length} items)
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
@@ -186,18 +171,15 @@ export default function CreateOrderModal({
 
       {/* Mobile Cart Drawer */}
       <Drawer open={showMobileCart} onOpenChange={setShowMobileCart}>
-        <DrawerContent className="flex flex-col">
-          <DrawerHeader className="border-b px-4">
-            <DrawerTitle>Your Cart</DrawerTitle>
+        <DrawerContent className="h-[90vh]">
+          <DrawerHeader className="border-b p-4 mobile-md:p-3">
+            <DrawerTitle className="text-lg mobile-md:text-base">Order Cart</DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-auto p-4 mobile-md:p-3">
             <OrderCart
               items={selectedItems}
               onQuantityChange={handleQuantityChange}
-              onOpenOrder={() => {
-                setShowMobileCart(false);
-                handleOpenOrder();
-              }}
+              onOpenOrder={handleOpenOrder}
             />
           </div>
         </DrawerContent>

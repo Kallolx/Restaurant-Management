@@ -58,15 +58,15 @@ export default function SalesChart() {
 
   return (
     <Card className="w-full px-4 py-4">
-      <CardHeader className="flex flex-row items-center justify-between p-0 pb-4">
-        <CardTitle className="text-xl text-foreground font-medium">
+      <CardHeader className="flex flex-row items-center justify-between p-0 pb-4 mobile-md:flex-col mobile-md:items-start mobile-md:gap-3">
+        <CardTitle className="text-xl text-foreground font-medium mobile-md:text-lg">
           Monthly Sales Stats-{selectedYear}
         </CardTitle>
         <Select
           value={selectedYear}
           onValueChange={(value: "2023" | "2024") => setSelectedYear(value)}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] mobile-md:w-full">
             <SelectValue placeholder="Year 2024" />
           </SelectTrigger>
           <SelectContent>
@@ -75,71 +75,71 @@ export default function SalesChart() {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="p-0">
-        <ChartContainer
-          config={{
-            sales: {
-              label: "Sales",
-              color: "hsl(var(--chart-1))",
-            },
-          }}
-          className="h-[250px] w-full"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <LazyAreaChart
-              data={chartData}
-              // margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <defs>
-                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="hsl(var(--chart-1))"
-                    stopOpacity={0.2}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="hsl(var(--chart-1))"
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="month"
-                axisLine={false}
-                tickLine={false}
-                tickMargin={8}
-                fontSize={12}
-                stroke="hsl(var(--muted-foreground))"
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tickMargin={8}
-                fontSize={12}
-                tickFormatter={(value) =>
-                  value / 1000 ? `${(value / 1000).toFixed(0)}k` : `${0}`
-                }
-                stroke="hsl(var(--muted-foreground))"
-              />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area
-                type="monotone"
-                dataKey="sales"
-                stroke="hsl(var(--chart-1))"
-                strokeWidth={2}
-                fill="url(#colorSales)"
-                dot={{
-                  r: 4,
-                  strokeWidth: 2,
-                  fill: "hsl(var(--background))",
-                  stroke: "hsl(var(--chart-1))",
-                }}
-              />
-            </LazyAreaChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-      </CardContent>
+      
+      <ChartContainer
+        config={{
+          sales: {
+            label: "Sales",
+            color: "hsl(var(--chart-1))",
+          },
+        }}
+        className="h-[250px] w-full mobile-md:h-[200px]"
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <LazyAreaChart
+            data={chartData}
+            margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+          >
+            <defs>
+              <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="hsl(var(--chart-1))"
+                  stopOpacity={0.2}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="hsl(var(--chart-1))"
+                  stopOpacity={0}
+                />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="month"
+              axisLine={false}
+              tickLine={false}
+              tickMargin={8}
+              fontSize={10}
+              stroke="hsl(var(--muted-foreground))"
+              interval="preserveStartEnd"
+              minTickGap={10}
+              angle={-45}
+              textAnchor="end"
+              height={50}
+              className="mobile-md:text-[8px]"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tickMargin={8}
+              fontSize={10}
+              tickFormatter={(value) =>
+                value / 1000 ? `${(value / 1000).toFixed(0)}k` : `${0}`
+              }
+              stroke="hsl(var(--muted-foreground))"
+              className="mobile-md:text-[8px]"
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Area
+              type="monotone"
+              dataKey="sales"
+              stroke="hsl(var(--chart-1))"
+              fillOpacity={1}
+              fill="url(#colorSales)"
+            />
+          </LazyAreaChart>
+        </ResponsiveContainer>
+      </ChartContainer>
     </Card>
   );
 }

@@ -45,43 +45,39 @@ export function ReservationContent() {
   );
 
   return (
-    <div className="flex flex-col gap-6 overflow-hidden md:grid md:grid-cols-2">
-      <div className="flex-1 bg-background rounded-lg max-h-[calc(100vh-133px)] overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col gap-6 mobile-md:gap-4">
+      <div className="flex-1 bg-background rounded-lg max-h-[calc(100vh-133px)] mobile-md:max-h-[calc(50vh-80px)] overflow-y-auto custom-scrollbar">
         <h2 className="px-4 pt-4 pb-2 text-lg font-semibold bg-background sticky top-0 left-0 right-0 z-50">
           Confirm Reservations
         </h2>
-        <div className="">
-          <div className="p-4">
-            <ReservationList
-              reservations={pendingReservations}
-              onCancelClick={(reservation) => {
-                setSelectedReservation(reservation);
-                setIsCancelModalOpen(true);
-              }}
-              variant="pending"
-              showCancelButton
-            />
-          </div>
+        <div className="p-4">
+          <ReservationList
+            reservations={pendingReservations}
+            onCancelClick={(reservation) => {
+              setSelectedReservation(reservation);
+              setIsCancelModalOpen(true);
+            }}
+            variant="pending"
+            showCancelButton
+          />
         </div>
       </div>
 
-      <div className="flex-1 bg-background rounded-lg max-h-[calc(100vh-133px)] overflow-y-auto custom-scrollbar">
+      <div className="flex-1 bg-background rounded-lg max-h-[calc(100vh-133px)] mobile-md:max-h-[calc(50vh-80px)] overflow-y-auto custom-scrollbar">
         <h2 className="px-4 pt-4 pb-2 text-lg font-semibold bg-background sticky top-0 left-0 right-0 z-50">
           Completed Reservations
         </h2>
-        <div className="">
-          <div className="p-4">
-            <ReservationList
-              reservations={completedReservations}
-              variant="completed"
-              showCompletedBadge
-            />
-          </div>
+        <div className="p-4">
+          <ReservationList
+            reservations={completedReservations}
+            variant="completed"
+            showCompletedBadge
+          />
         </div>
       </div>
 
       <Button
-        className="fixed bottom-6 right-6 gap-3 rounded-2xl py-7"
+        className="fixed bottom-6 right-6 gap-3 rounded-2xl py-7 mobile-md:bottom-20 mobile-md:right-4 mobile-md:py-5"
         onClick={() => setIsAddModalOpen(true)}
         variant="primary"
         size="lg"

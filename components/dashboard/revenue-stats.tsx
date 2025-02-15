@@ -72,57 +72,62 @@ export function RevenueStats({ className }: RevenueStatsProps) {
             </p>
           </div>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mobile-md:flex-col mobile-md:items-start mobile-md:gap-4">
               <div className="flex items-center gap-2">
                 <div className="">
                   <FoodSalesIcon
-                    className="size-10 fill-[#4B4B4B]"
+                    className="size-8 fill-[#4B4B4B] mobile-md:size-7"
                     fill="currentColor"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <h4 className="text-xl font-medium">{formatPrice(3234)}</h4>
+                  <h4 className="text-xl font-medium mobile-md:text-lg">{formatPrice(revenueData.food)}</h4>
                   <p className="text-sm text-secondary-foreground">
                     Food Sales
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-foreground font-medium text-base">
-                  {formatPrice(3421)}{" "}
-                  <span className="font-medium text-secondary-foreground text-sm">
+              <div className="flex flex-col gap-1.5 mobile-md:pl-12">
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground font-medium text-base mobile-md:text-sm">
+                    {formatPrice(3421)}
+                  </span>
+                  <span className="font-medium text-secondary-foreground text-xs">
                     Highest sells
                   </span>
-                </span>
-                <span className="font-medium text-secondary-foreground text-sm">
+                </div>
+                <span className="font-medium text-secondary-foreground text-xs">
                   Item: Grilled Chicken
                 </span>
               </div>
             </div>
-            <div className="flex items-center justify-between">
+
+            <div className="flex items-center justify-between mobile-md:flex-col mobile-md:items-start mobile-md:gap-4">
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center">
+                <div className="">
                   <BeverageSalesIcon
-                    className="size-10 fill-[#4B4B4B]"
+                    className="size-8 fill-[#4B4B4B] mobile-md:size-7"
                     fill="currentColor"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <h4 className="text-xl font-medium">{formatPrice(3234)}</h4>
+                  <h4 className="text-xl font-medium mobile-md:text-lg">{formatPrice(revenueData.beverage)}</h4>
                   <p className="text-sm text-secondary-foreground">
-                    Beverage sales
+                    Beverage Sales
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-foreground font-medium text-base">
-                  {formatPrice(3421)}{" "}
-                  <span className="font-medium text-secondary-foreground text-sm">
-                    Lowest sells
+              <div className="flex flex-col gap-1.5 mobile-md:pl-12">
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground font-medium text-base mobile-md:text-sm">
+                    {formatPrice(3421)}
                   </span>
-                </span>
-                <span className="font-medium text-secondary-foreground text-sm">
-                  Item: Grilled Chicken
+                  <span className="font-medium text-secondary-foreground text-xs">
+                    Highest sells
+                  </span>
+                </div>
+                <span className="font-medium text-secondary-foreground text-xs">
+                  Item: Cold Coffee
                 </span>
               </div>
             </div>

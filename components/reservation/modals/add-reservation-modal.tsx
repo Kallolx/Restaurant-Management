@@ -83,30 +83,28 @@ export function AddReservationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex h-full max-w-[800px] overflow-hidden flex-col p-0">
+      <DialogContent className="flex h-full max-w-[800px] overflow-hidden flex-col p-0 mobile-md:h-[95vh] mobile-md:w-full">
         <Form {...form}>
           <form
             onSubmit={handleSubmit}
-            className="grid h-[92vh] grid-rows-[auto_1fr_auto]"
+            className="grid h-[92vh] mobile-md:h-full grid-rows-[auto_1fr_auto]"
           >
-            <DialogHeader className="px-6 py-5">
-              <DialogTitle>Add Reservation</DialogTitle>
-              <DialogDescription>
+            <DialogHeader className="px-6 py-5 mobile-md:px-4 mobile-md:py-4">
+              <DialogTitle className="mobile-md:text-lg">Add Reservation</DialogTitle>
+              <DialogDescription className="mobile-md:text-sm">
                 Fill up the form with below to add a new reservation
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto px-6">
+            <div className="flex-1 overflow-y-auto px-6 mobile-md:px-4">
               <div className="space-y-6 py-4 pt-0">
-                <div className="grid gap-6">
+                <div className="grid gap-6 mobile-md:gap-4">
                   <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                      <FormItem className="grid grid-cols-1 gap-2 sm:grid-cols-[180px_1fr]  sm:gap-4 items-center sm:mt-0 ">
-                        <FormLabel className="sm:mt-2">
-                          Reservation date
-                        </FormLabel>
+                      <FormItem className="grid grid-cols-1 gap-2 sm:grid-cols-[180px_1fr] sm:gap-4 items-center sm:mt-0 mobile-md:grid-cols-1">
+                        <FormLabel className="sm:mt-2 mobile-md:text-sm">Reservation date</FormLabel>
                         <div className="relative">
                           <Popover>
                             <PopoverTrigger asChild>
@@ -114,23 +112,16 @@ export function AddReservationModal({
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full bg-gray-50 pl-3 text-left font-normal",
+                                    "w-full bg-gray-50 pl-3 text-left font-normal mobile-md:text-sm mobile-md:h-9",
                                     !date && "text-muted-foreground"
                                   )}
                                 >
-                                  {date ? (
-                                    format(date, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
+                                  {date ? format(date, "PPP") : <span>Pick a date</span>}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent
-                              className="w-auto p-0"
-                              align="start"
-                            >
+                            <PopoverContent className="w-auto p-0" align="start">
                               <Calendar
                                 mode="single"
                                 selected={date}
@@ -139,8 +130,7 @@ export function AddReservationModal({
                                   field.onChange(newDate?.toISOString());
                                 }}
                                 disabled={(date) =>
-                                  date < new Date() ||
-                                  date < new Date("1900-01-01")
+                                  date < new Date() || date < new Date("1900-01-01")
                                 }
                                 initialFocus
                               />
@@ -156,15 +146,13 @@ export function AddReservationModal({
                     control={form.control}
                     name="time"
                     render={({ field }) => (
-                      <FormItem className="grid grid-cols-1 gap-2 sm:grid-cols-[180px_1fr]  sm:gap-4 items-center sm:mt-0">
-                        <FormLabel className="sm:mt-2">
-                          Reservation time
-                        </FormLabel>
+                      <FormItem className="grid grid-cols-1 gap-2 sm:grid-cols-[180px_1fr] sm:gap-4 items-center sm:mt-0 mobile-md:grid-cols-1">
+                        <FormLabel className="sm:mt-2 mobile-md:text-sm">Reservation time</FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input
                               placeholder="ex-30.00-5.00pm"
-                              className="bg-gray-50"
+                              className="bg-gray-50 mobile-md:text-sm mobile-md:h-9"
                               {...field}
                             />
                           </FormControl>
@@ -332,11 +320,20 @@ export function AddReservationModal({
               </div>
             </div>
 
-            <DialogFooter className="flex-shrink-0 border-t px-6 py-6">
-              <Button type="button" variant="outline" onClick={onClose}>
+            <DialogFooter className="flex-shrink-0 border-t px-6 py-4 mobile-md:px-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                className="mobile-md:text-sm mobile-md:h-9"
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
+              <Button 
+                type="submit" 
+                variant="primary"
+                className="mobile-md:text-sm mobile-md:h-9"
+              >
                 Add Reservation
               </Button>
             </DialogFooter>
