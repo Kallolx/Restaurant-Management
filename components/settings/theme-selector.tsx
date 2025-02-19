@@ -55,6 +55,20 @@ export default function ThemeSelector() {
   const [isUploading, setIsUploading] = useState(false);
   const [customThemes, setCustomThemes] = useState<BackgroundTheme[]>([]);
 
+  // Get restaurant UUID from localStorage
+  const getRestaurantId = () => {
+    if (typeof window !== 'undefined') {
+      const auth = localStorage.getItem('auth');
+      if (auth) {
+        const { restaurant } = JSON.parse(auth);
+        return restaurant.uuid;
+      }
+    }
+    return null;
+  };
+
+  const RESTAURANT_ID = getRestaurantId();
+
   // Fetch wallpapers
   const { data: wallpapers = [] } = useQuery<Wallpaper[]>({
     queryKey: ['wallpapers'],
@@ -68,20 +82,28 @@ export default function ThemeSelector() {
   const { data: currentSettings } = useQuery({
     queryKey: ['restaurant-settings'],
     queryFn: async () => {
-      const response = await apiClient.get('/restaurants/settings/');
-      return response.data;
-    }
+      try {
+        if (!RESTAURANT_ID) throw new Error('Restaurant ID not found');
+        const response = await apiClient.get(`/restaurants/${RESTAURANT_ID}/settings/`);
+        console.log('Current settings response:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+        throw error;
+      }
+    },
+    enabled: !!RESTAURANT_ID
   });
 
   // Fetch menu items
   const { data: menuItems = [] } = useQuery<MenuItem[]>({
     queryKey: ['menu-items'],
     queryFn: async () => {
-      // Get restaurant ID from the current URL or context
-      const restaurantId = "65ff1fb6-e4e8-48a4-905f-ce198d38e5f2"; // This should be dynamic based on your app's context
-      const response = await apiClient.get(`/restaurants/${restaurantId}/menu/`);
+      if (!RESTAURANT_ID) throw new Error('Restaurant ID not found');
+      const response = await apiClient.get(`/restaurants/${RESTAURANT_ID}/menu/`);
       return response.data;
-    }
+    },
+    enabled: !!RESTAURANT_ID
   });
 
   // Group menu items by type with proper type checking
@@ -97,23 +119,50 @@ export default function ThemeSelector() {
   // Update settings mutation
   const updateSettings = useMutation({
     mutationFn: async (newSettings: BackgroundSettings) => {
-      const response = await apiClient.put('/restaurants/settings/update/', {
-        menu_wallpaper: newSettings.selectedTheme,
-        text_color: newSettings.textColor,
-        background_opacity: newSettings.opacity
-      });
-      return response.data;
+      try {
+        if (!RESTAURANT_ID) throw new Error('Restaurant ID not found');
+        console.log('Updating settings with:', newSettings);
+        
+        // Get current settings to maintain other values
+        const currentData = await apiClient.get(`/restaurants/${RESTAURANT_ID}/settings/`);
+        const existingSettings = currentData.data;
+
+        // Merge new theme settings with existing settings
+        const response = await apiClient.put(`/restaurants/${RESTAURANT_ID}/settings/update/`, {
+          ...existingSettings,
+          menu_wallpaper: newSettings.selectedTheme,
+          text_color: newSettings.textColor,
+          background_opacity: newSettings.opacity
+        });
+        
+        console.log('Settings update response:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error updating settings:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
         title: t("Settings updated"),
         description: t("Your menu background settings have been saved"),
       });
+      // Invalidate both restaurant settings and menu settings queries
+      queryClient.invalidateQueries({ queryKey: ['restaurant-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['menu-settings'] });
+      // Also invalidate any queries that contain 'settings' in their key
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey.some(key => key?.toString().includes('settings')) });
+      
+      // Store the latest settings in localStorage for immediate access
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('menuSettings', JSON.stringify(settings));
+      }
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Settings update error:', error);
       toast({
         title: t("Update failed"),
-        description: t("Failed to update settings. Please try again."),
+        description: error.response?.data?.detail || t("Failed to update settings. Please try again."),
         variant: "destructive",
       });
     }
@@ -122,42 +171,57 @@ export default function ThemeSelector() {
   // Upload custom theme mutation
   const uploadTheme = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('name', file.name.split('.')[0]); // Use filename without extension as name
-      formData.append('is_default', 'false');
-      formData.append('display_order', '0');
-      formData.append('is_active', 'true');
+      try {
+        const formData = new FormData();
+        // Only send the required fields that the API expects
+        formData.append('name', 'bg_for_restaurant');
+        formData.append('image', file);
+        formData.append('is_active', 'true');
 
-      const response = await apiClient.post('/wallpapers/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
+        console.log('Uploading wallpaper with data:', {
+          name: 'bg_for_restaurant',
+          fileName: file.name,
+          isActive: true
+        });
+
+        const response = await apiClient.post('/wallpapers/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        console.log('Upload response:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error uploading wallpaper:', error);
+        throw error;
+      }
     },
     onSuccess: (data: Wallpaper) => {
-      // Update wallpapers query cache using the queryClient from component scope
+      // Update wallpapers query cache
       queryClient.setQueryData<Wallpaper[]>(['wallpapers'], (old = []) => {
         return [...old, data];
       });
 
-      // Update settings with new wallpaper
-      setSettings(prev => ({ ...prev, selectedTheme: data.uuid }));
+      // Update settings with new wallpaper and apply it immediately
+      const newSettings = {
+        ...settings,
+        selectedTheme: data.uuid
+      };
+      setSettings(newSettings);
       
-      // Show preview dialog after upload
-      setShowPreviewDialog(true);
+      // Apply the new wallpaper immediately
+      updateSettings.mutate(newSettings);
 
       toast({
         title: t("Wallpaper uploaded"),
-        description: t("Your custom wallpaper has been uploaded successfully"),
+        description: t("Your custom wallpaper has been uploaded and applied"),
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Upload error:', error);
       toast({
         title: t("Upload failed"),
-        description: t("Failed to upload custom wallpaper. Please try again."),
+        description: error.response?.data?.detail || t("Failed to upload custom wallpaper. Please try again."),
         variant: "destructive",
       });
     }

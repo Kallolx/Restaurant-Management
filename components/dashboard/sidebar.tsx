@@ -8,7 +8,7 @@ import { useRBAC } from "@/hooks/useRBAC";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "@/providers/language-provider";
 import { useLogout } from "@/services/hooks/use-auth";
@@ -155,6 +155,18 @@ function NavLinkItem({ sidebarItem }: { sidebarItem: SidebarNavItem }) {
 export function ThemeSwitcher({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
+  const [mounted, setMounted] = useState(false);
+
+  // After mounting, we have access to the theme
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <li className={cn("px-5 py-2.5", className)}>
+        <div className="bg-accent dark:bg-accent px-2 py-1.5 rounded-2xl flex items-center gap-1.5 justify-between h-[38px]" />
+      </li>
+    );
+  }
 
   return (
     <li className={cn("px-5 py-2.5", className)}>
@@ -162,10 +174,10 @@ export function ThemeSwitcher({ className }: { className?: string }) {
         <button
           onClick={() => setTheme("light")}
           className={cn(
-            "text-secondary-foreground dark:text-secondary-foreground flex items-center gap-2 px-2.5 py-1 rounded-full",
-            {
-              "text-foreground dark:text-foreground bg-accent dark:bg-muted": theme === "light",
-            }
+            "flex items-center gap-2 px-2.5 py-1 rounded-full",
+            theme === "light"
+              ? "bg-accent dark:bg-muted text-foreground dark:text-foreground"
+              : "text-secondary-foreground dark:text-secondary-foreground"
           )}
         >
           <Sun className="size-4" />
@@ -175,10 +187,10 @@ export function ThemeSwitcher({ className }: { className?: string }) {
         <button
           onClick={() => setTheme("dark")}
           className={cn(
-            "text-secondary-foreground dark:text-secondary-foreground flex items-center gap-2 px-2.5 py-1 rounded-full",
-            {
-              "text-foreground dark:text-foreground bg-accent dark:bg-muted": theme === "dark",
-            }
+            "flex items-center gap-2 px-2.5 py-1 rounded-full",
+            theme === "dark"
+              ? "bg-accent dark:bg-muted text-foreground dark:text-foreground"
+              : "text-secondary-foreground dark:text-secondary-foreground"
           )}
         >
           <Moon className="size-4" />

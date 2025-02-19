@@ -64,46 +64,6 @@ export default function SubscriptionDetails() {
                 Previous bills
               </Button>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  id="tax"
-                  checked={plan.tax > 0}
-                  onCheckedChange={(checked) =>
-                    setPlan({ ...plan, tax: checked ? 15 : 0 })
-                  }
-                />
-                <Label htmlFor="tax">Add Tax</Label>
-                <Input
-                  type="number"
-                  value={plan.tax}
-                  onChange={(e) =>
-                    setPlan({ ...plan, tax: parseInt(e.target.value) || 0 })
-                  }
-                  className="w-20"
-                />
-                <span>%</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  id="vat"
-                  checked={plan.vat > 0}
-                  onCheckedChange={(checked) =>
-                    setPlan({ ...plan, vat: checked ? 15 : 0 })
-                  }
-                />
-                <Label htmlFor="vat">Add Vat</Label>
-                <Input
-                  type="number"
-                  value={plan.vat}
-                  onChange={(e) =>
-                    setPlan({ ...plan, vat: parseInt(e.target.value) || 0 })
-                  }
-                  className="w-20"
-                />
-                <span>%</span>
-              </div>
-            </div>
             <div className="mt-3">
               <Link
                 href="/dashboard/subscription"

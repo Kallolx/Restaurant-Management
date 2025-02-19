@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/providers/language-provider";
 import type { Metadata } from "next";
 import { DM_Sans, Anek_Bangla } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/providers/auth-provider";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -86,10 +87,12 @@ export default function RootLayout({
           storageKey="restaurant-theme"
         >
           <LanguageProvider>
-            <QueryProvider>
-              {children}
-              <Toaster />
-            </QueryProvider>
+            <AuthProvider>
+              <QueryProvider>
+                {children}
+                <Toaster />
+              </QueryProvider>
+            </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>
