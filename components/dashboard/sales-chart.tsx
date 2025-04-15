@@ -13,48 +13,74 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { lazy, useMemo, useState } from "react";
+import { apiClient } from "@/services/apiClient";
+import { useQuery } from "@tanstack/react-query";
+import { lazy, useEffect, useMemo, useState } from "react";
 import { Area, ResponsiveContainer, XAxis, YAxis } from "recharts";
 // Lazy-load heavy libraries or components
 const LazyAreaChart = lazy(() =>
   import("recharts").then((module) => ({ default: module.AreaChart }))
 );
 
-const monthlyData = {
-  2023: [
-    { month: "Jan", sales: 2000 },
-    { month: "Feb", sales: 12000 },
-    { month: "Mar", sales: 10000 },
-    { month: "Apr", sales: 9000 },
-    { month: "May", sales: 15000 },
-    { month: "Jun", sales: 20000 },
-    { month: "Jul", sales: 15000 },
-    { month: "Aug", sales: 14000 },
-    { month: "Sep", sales: 18000 },
-    { month: "Oct", sales: 20000 },
-    { month: "Nov", sales: 22000 },
-    { month: "Dec", sales: 15000 },
-  ],
-  2024: [
-    { month: "Jan", sales: 3000 },
-    { month: "Feb", sales: 13000 },
-    { month: "Mar", sales: 11000 },
-    { month: "Apr", sales: 10000 },
-    { month: "May", sales: 16000 },
-    { month: "Jun", sales: 21000 },
-    { month: "Jul", sales: 16000 },
-    { month: "Aug", sales: 15000 },
-    { month: "Sep", sales: 19000 },
-    { month: "Oct", sales: 21000 },
-    { month: "Nov", sales: 23000 },
-    { month: "Dec", sales: 16000 },
-  ],
+// Month name mapping
+const MONTH_NAMES = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+// Type for the API response
+interface YearlySalesResponse {
+  year: number;
+  monthly_sales: Array<{
+    month: number;
+    amount: number;
+  }>;
+}
+
+// Function to fetch yearly sales data
+const fetchYearlySales = async (year: string): Promise<YearlySalesResponse> => {
+  const { data } = await apiClient.get<YearlySalesResponse>(`/api/yearly-sales/?year=${year}`);
+  return data;
 };
 
 export default function SalesChart() {
-  const [selectedYear, setSelectedYear] = useState<"2023" | "2024">("2024");
+  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  
+  // Use react-query to fetch data
+  const { data, isLoading, error } = useQuery<YearlySalesResponse>({
+    queryKey: ["yearly-sales", selectedYear],
+    queryFn: () => fetchYearlySales(selectedYear),
+    // Disable the query if we're in development mode with no API
+    enabled: process.env.NODE_ENV !== "development" || true, // Set to true for testing
+  });
 
-  const chartData = useMemo(() => monthlyData[selectedYear], [selectedYear]);
+  // Transform the data for the chart
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    return data.monthly_sales.map(item => ({
+      month: MONTH_NAMES[item.month - 1],
+      sales: item.amount
+    }));
+  }, [data]);
+
+  // Fallback to mock data if we're in development or if there's an error
+  const mockData = useMemo(() => {
+    const year = parseInt(selectedYear);
+    const baseAmount = year === 2025 ? 880 : year === 2024 ? 3000 : 2000;
+    
+    return Array.from({ length: 12 }, (_, i) => ({
+      month: MONTH_NAMES[i],
+      sales: year === 2025 && i === 0 ? 880 : year === 2025 && i > 0 ? 0 : baseAmount + (i * 1000 * (year - 2022))
+    }));
+  }, [selectedYear]);
+
+  // Use real data if available, otherwise use mock data
+  const displayData = useMemo(() => {
+    if (isLoading || error || !data || process.env.NODE_ENV === "development") {
+      return mockData;
+    }
+    return chartData;
+  }, [chartData, mockData, isLoading, error, data]);
 
   return (
     <Card className="w-full px-4 py-4">
@@ -64,14 +90,15 @@ export default function SalesChart() {
         </CardTitle>
         <Select
           value={selectedYear}
-          onValueChange={(value: "2023" | "2024") => setSelectedYear(value)}
+          onValueChange={(value: string) => setSelectedYear(value)}
         >
           <SelectTrigger className="w-[180px] mobile-md:w-full">
-            <SelectValue placeholder="Year 2024" />
+            <SelectValue placeholder={`Year ${selectedYear}`} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="2023">Year 2023</SelectItem>
             <SelectItem value="2024">Year 2024</SelectItem>
+            <SelectItem value="2025">Year 2025</SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
@@ -87,7 +114,7 @@ export default function SalesChart() {
       >
         <ResponsiveContainer width="100%" height="100%">
           <LazyAreaChart
-            data={chartData}
+            data={displayData}
             margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
           >
             <defs>

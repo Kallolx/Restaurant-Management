@@ -42,6 +42,8 @@ import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/services/apiClient";
 import { useToast } from "@/hooks/use-toast";
+import { createReservation } from "@/services/api/reservation";
+import { mapApiResponseToReservation } from "@/services/api/reservation";
 
 interface AddReservationModalProps {
   isOpen: boolean;
@@ -102,6 +104,7 @@ export function AddReservationModal({
   onSubmit,
 }: AddReservationModalProps) {
   const [date, setDate] = useState<Date>(new Date()); // Initialize with today's date
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const form = useForm({
     resolver: zodResolver(addReservationSchema),
@@ -128,33 +131,107 @@ export function AddReservationModal({
     queryFn: async () => {
       if (!selectedDate || !selectedFromTime) return null;
       
+      // Get the authentication token from localStorage
+      const auth = localStorage.getItem("auth");
+      const authData = auth ? JSON.parse(auth) : null;
+      const token = authData?.tokens?.access;
+      
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+      
       const formattedDate = format(new Date(selectedDate), "yyyy-MM-dd");
       const formattedTime = selectedFromTime + ":00";
       
-      const response = await apiClient.get(
-        `/reservations/table_availability/?date=${formattedDate}&time=${formattedTime}`
-      );
-      return response.data;
+      // Set up headers with authentication
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
+      try {
+        const response = await apiClient.get(
+          `https://api.hishabx.io/api/reservations/table_availability/?date=${formattedDate}&time=${formattedTime}`,
+          { headers }
+        );
+        
+        console.log('Table availability response:', response.data);
+        return response.data;
+      } catch (error: any) {
+        console.error('Error fetching table availability:', error.response?.data || error.message);
+        // Show error in toast but don't fail the query
+        if (error.response?.status !== 404) { // Don't show toast for not found
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not fetch available tables. Please try different time.",
+          });
+        }
+        // Return empty data instead of failing
+        return { total_tables: 0, available_table_numbers: [] };
+      }
     },
     enabled: !!selectedDate && !!selectedFromTime,
+    refetchOnWindowFocus: false,
+    staleTime: 30000, // 30 seconds
   });
 
-  const handleSubmit = form.handleSubmit((data) => {
-    const newReservation = {
-      date: format(new Date(data.date), "yyyy-MM-dd"),
-      from_time: data.from_time + ":00",
-      to_time: data.to_time + ":00",
-      table_number: Number(data.tableNo), // Ensure proper number conversion
-      number_of_guests: Number(data.guestCount),
-      guest_name: data.guest_name,
-      guest_phone: data.guest_phone,
-      guest_email: data.guest_email,
-      guest_note: data.guest_note,
-    };
-    console.log('Submitting reservation:', newReservation); // Debug log
-    onSubmit(newReservation);
-    form.reset();
-    setDate(undefined);
+  const handleSubmit = form.handleSubmit(async (data) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Format reservation data according to API requirements
+      const reservationData = {
+        date: format(new Date(data.date), "yyyy-MM-dd"),
+        from_time: data.from_time,
+        to_time: data.to_time,
+        table_number: Number(data.tableNo),
+        number_of_guests: Number(data.guestCount),
+        guest_name: data.guest_name,
+        guest_phone: data.guest_phone,
+        guest_email: data.guest_email || "",
+        guest_note: data.guest_note || "",
+      };
+      
+      // Debug log - detailed request data
+      console.log('Submitting reservation data:', JSON.stringify(reservationData, null, 2));
+      
+      // Call the API to create the reservation
+      const createdReservation = await createReservation(reservationData);
+      
+      // Debug log - successful response
+      console.log('Reservation created successfully:', createdReservation);
+      
+      // Pass the created reservation to parent component
+      onSubmit(createdReservation);
+      
+      // Close the modal
+      onClose();
+      
+      // Reset form
+      form.reset();
+      setDate(new Date());
+      
+      toast({
+        title: "Success",
+        description: "Reservation created successfully!",
+      });
+    } catch (error: any) {
+      // Detailed error logging
+      console.error("Failed to create reservation:", error);
+      console.error("Response data:", error.response?.data);
+      console.error("Status code:", error.response?.status);
+      
+      // Show more detailed error message to the user
+      toast({
+        variant: "destructive",
+        title: "Reservation Failed",
+        description: error.response?.data?.detail || 
+                    "Failed to create reservation. Please check your inputs and try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   });
 
   // Effect to show toast when table availability changes
@@ -470,12 +547,20 @@ export function AddReservationModal({
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   variant="primary"
                   className="flex-1 h-10 mobile-md:h-9 mobile-md:text-sm"
+                  disabled={isSubmitting}
                 >
-                  Add Reservation
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Add Reservation"
+                  )}
                 </Button>
               </div>
             </DialogFooter>

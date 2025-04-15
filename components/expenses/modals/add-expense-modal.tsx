@@ -43,7 +43,7 @@ import type {
 } from "@/types/expense";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, Pencil } from "lucide-react";
+import { CalendarIcon, Pencil, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AddCategoryModal } from "./add-category-modal";
@@ -51,16 +51,20 @@ import { AddCategoryModal } from "./add-category-modal";
 interface ExpenseFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (expense: ExpenseRequest) => void;
+  onSubmit: (expense: any) => void;
 }
 
-const initialCategories: ExpenseCategory[] = [
-  { uuid: "1", name: "Food", bangla_name: "খাবার" },
-  { uuid: "2", name: "Beverage", bangla_name: "পানীয়" },
-  { uuid: "3", name: "Rent", bangla_name: "ভাড়া" },
-  { uuid: "4", name: "Labor cost", bangla_name: "শ্রম ব্যয়" },
-  { uuid: "5", name: "Utilities", bangla_name: "ইউটিলিটি" },
-  { uuid: "6", name: "Supplies", bangla_name: "সরবরাহ" },
+const initialCategories = [
+  "Food",
+  "Beverage",
+  "Rent",
+  "Labor cost",
+  "Utilities",
+  "Supplies",
+  "Equipment",
+  "Maintenance",
+  "Marketing",
+  "Other"
 ];
 
 export function AddExpenseModal({
@@ -68,51 +72,48 @@ export function AddExpenseModal({
   onOpenChange,
   onSubmit,
 }: ExpenseFormProps) {
-  const [categories, setCategories] =
-    useState<ExpenseCategory[]>(initialCategories);
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<
-    ExpenseCategory | undefined
-  >();
+  const [categories] = useState<string[]>(initialCategories);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
-      expense_category: "",
+      category: "",
       amount: 0,
       due_expense: 0,
-      date: new Date(),
+      date: format(new Date(), "yyyy-MM-dd"),
       description: "",
       note: "",
       mode: "cash",
     },
   });
 
-  const handleSubmit = (data: ExpenseFormValues) => {
-    onSubmit({
-      ...data,
-      date: format(data.date, "yyyy-MM-dd"),
-    });
-    form.reset();
-    onOpenChange(false);
-  };
-
-  const handleAddCategory = (categoryData: ExpenseCategoryRequest) => {
-    if (editingCategory) {
-      setCategories(
-        categories.map((cat) =>
-          cat.uuid === editingCategory.uuid ? { ...cat, ...categoryData } : cat
-        )
-      );
-    } else {
-      const newCategory = {
-        uuid: (categories.length + 1).toString(), // In real app, this would come from API
-        ...categoryData,
+  const handleSubmit = async (data: ExpenseFormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Format the expense data according to API requirements
+      const expenseData = {
+        category_name: data.category,
+        amount: data.amount,
+        due_expense: data.due_expense || 0,
+        date: data.date,
+        description: data.description || "",
+        note: data.note || "",
+        mode: data.mode,
       };
-      setCategories([...categories, newCategory]);
-      form.setValue("expense_category", newCategory.uuid);
+      
+      // Submit the data
+      await onSubmit(expenseData);
+      
+      // Reset form and close modal
+      form.reset();
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error submitting expense:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    setEditingCategory(undefined);
   };
 
   return (
@@ -120,7 +121,7 @@ export function AddExpenseModal({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Add Expenses</DialogTitle>
+            <DialogTitle>Add Expense</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form
@@ -132,12 +133,12 @@ export function AddExpenseModal({
                 name="amount"
                 render={({ field }) => (
                   <FormItem className="grid gap-4 sm:grid-cols-4 sm:items-center">
-                    <FormLabel className="sm:col-span-1">Expenses</FormLabel>
+                    <FormLabel className="sm:col-span-1">Amount</FormLabel>
                     <div className="sm:col-span-3">
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="ex-570"
+                          placeholder="Enter amount"
                           {...field}
                           onChange={(e) =>
                             field.onChange(parseFloat(e.target.value) || 0)
@@ -161,7 +162,7 @@ export function AddExpenseModal({
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="ex-100"
+                          placeholder="Enter due amount (optional)"
                           {...field}
                           onChange={(e) =>
                             field.onChange(parseFloat(e.target.value) || 0)
@@ -181,7 +182,7 @@ export function AddExpenseModal({
                 render={({ field }) => (
                   <FormItem className="grid gap-4 sm:grid-cols-4 sm:items-center">
                     <FormLabel className="sm:col-span-1">
-                      Payment Type
+                      Payment Mode
                     </FormLabel>
                     <div className="sm:col-span-3">
                       <FormControl>
@@ -195,8 +196,12 @@ export function AddExpenseModal({
                             <FormLabel htmlFor="cash">Cash</FormLabel>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="credit" id="credit" />
-                            <FormLabel htmlFor="credit">On credit</FormLabel>
+                            <RadioGroupItem value="card" id="card" />
+                            <FormLabel htmlFor="card">Card</FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="digital" id="digital" />
+                            <FormLabel htmlFor="digital">Digital</FormLabel>
                           </div>
                         </RadioGroup>
                       </FormControl>
@@ -208,7 +213,7 @@ export function AddExpenseModal({
 
               <FormField
                 control={form.control}
-                name="expense_category"
+                name="category"
                 render={({ field }) => (
                   <FormItem className="grid gap-4 sm:grid-cols-4 sm:items-center">
                     <FormLabel className="sm:col-span-1">Category</FormLabel>
@@ -224,76 +229,12 @@ export function AddExpenseModal({
                         </FormControl>
                         <SelectContent>
                           {categories.map((category) => (
-                            <div
-                              key={category.uuid}
-                              className="flex items-center justify-between"
-                            >
-                              <SelectItem value={category.uuid}>
-                                {category.name} ({category.bangla_name})
-                              </SelectItem>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setEditingCategory(category);
-                                  setShowAddCategory(true);
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">
-                                  Edit {category.name}
-                                </span>
-                              </Button>
-                            </div>
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
                           ))}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="relative w-full justify-start rounded-none text-left font-normal"
-                            onClick={() => {
-                              setEditingCategory(undefined);
-                              setShowAddCategory(true);
-                            }}
-                          >
-                            Add category
-                          </Button>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem className="grid gap-4 sm:grid-cols-4 sm:items-center">
-                    <FormLabel className="sm:col-span-1">Description</FormLabel>
-                    <div className="sm:col-span-3">
-                      <FormControl>
-                        <Input placeholder="Enter description" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem className="grid gap-4 sm:grid-cols-4 sm:items-start">
-                    <FormLabel className="sm:col-span-1 pt-2">Note</FormLabel>
-                    <div className="sm:col-span-3">
-                      <FormControl>
-                        <Textarea placeholder="Enter note" {...field} />
-                      </FormControl>
                       <FormMessage />
                     </div>
                   </FormItem>
@@ -311,24 +252,26 @@ export function AddExpenseModal({
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
-                              variant="outline"
+                              variant={"outline"}
                               className={cn(
-                                "w-full justify-start text-left font-normal",
+                                "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
                             >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value
-                                ? format(field.value, "PPP")
-                                : "Pick a date"}
+                              {field.value ? (
+                                format(new Date(field.value), "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
                             initialFocus
                           />
                         </PopoverContent>
@@ -339,7 +282,46 @@ export function AddExpenseModal({
                 )}
               />
 
-              <div className="flex justify-end space-x-4">
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="grid gap-4 sm:grid-cols-4 sm:items-center">
+                    <FormLabel className="sm:col-span-1">Description</FormLabel>
+                    <div className="sm:col-span-3">
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter expense description"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="note"
+                render={({ field }) => (
+                  <FormItem className="grid gap-4 sm:grid-cols-4 sm:items-center">
+                    <FormLabel className="sm:col-span-1">Notes</FormLabel>
+                    <div className="sm:col-span-3">
+                      <FormControl>
+                        <Input
+                          placeholder="Additional notes (optional)"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end pt-4 space-x-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -347,19 +329,24 @@ export function AddExpenseModal({
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Add Expenses</Button>
+                <Button 
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Add Expense"
+                  )}
+                </Button>
               </div>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-
-      <AddCategoryModal
-        open={showAddCategory}
-        onOpenChange={setShowAddCategory}
-        onSave={handleAddCategory}
-        editCategory={editingCategory}
-      />
     </>
   );
 }

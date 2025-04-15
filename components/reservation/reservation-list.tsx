@@ -37,12 +37,12 @@ export function ReservationList({
                       : "border-border text-muted-foreground"
                   )}
                 >
-                  {new Date(reservation.date).getDate()} Sep
+                  {new Date(reservation.date).getDate()} {new Date(reservation.date).toLocaleString('default', { month: 'short' })}
                 </Badge>
                 <span className="mobile-md:text-sm">{reservation.time}</span>
               </div>
               <div className="text-sm text-muted-foreground mobile-md:text-xs">
-                #{reservation.id}
+                {reservation.token || `#${reservation.id}`}
               </div>
               <div
                 className={cn(

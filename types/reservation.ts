@@ -11,4 +11,5 @@ export interface Reservation {
     specialRequest: string;
   };
   status: "pending" | "completed";
+  token?: string;
 }

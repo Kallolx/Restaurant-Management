@@ -26,3 +26,27 @@ export interface ExpenseType extends Omit<ExpenseRequest, "expense_category"> {
   created_at: string;
   updated_at: string;
 }
+
+export interface Expense {
+  id: string;
+  category: string;
+  categoryBangla?: string;
+  note: string;
+  amount: number;
+  dueAmount?: number;
+  date: Date;
+  description: string;
+  paymentMode: "cash" | "card" | "digital" | string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type ExpenseFormValues = {
+  category: string;
+  note: string;
+  amount: number;
+  due_expense?: number;
+  date: string;
+  description: string;
+  mode: string;
+};

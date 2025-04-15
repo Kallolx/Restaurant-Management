@@ -111,14 +111,37 @@ export default function SettingsForm() {
     queryFn: async () => {
       if (!authData?.restaurant?.uuid) throw new Error('No restaurant UUID found');
       const response = await apiClient.get(`/api/restaurants/${authData.restaurant.uuid}/settings/`);
+      console.log('Restaurant settings fetched:', response.data);
       return response.data;
     },
     enabled: !!authData?.restaurant?.uuid,
-    onSuccess: (data) => {
-      // Reset form with settings data
-      restaurantForm.reset(data);
-    }
   });
+
+  // Handle settings data when it's available
+  useEffect(() => {
+    if (currentSettings) {
+      // Reset form with settings data from API
+      restaurantForm.reset({
+        table_capacity: currentSettings.table_capacity || 25,
+        show_name: currentSettings.show_name,
+        show_logo: currentSettings.show_logo,
+        restaurant_name: currentSettings.restaurant_name || authData?.restaurant?.name || "",
+        restaurant_logo: currentSettings.restaurant_logo || null,
+        add_tax: currentSettings.add_tax,
+        tax_percentage: currentSettings.tax_percentage || 0,
+        add_vat: currentSettings.add_vat,
+        vat_percentage: currentSettings.vat_percentage || 0,
+        menu_wallpaper: currentSettings.menu_wallpaper,
+        text_color: currentSettings.text_color || "#FFFFFF",
+        background_opacity: currentSettings.background_opacity || 50
+      });
+      
+      // Update previews
+      if (currentSettings.restaurant_logo) {
+        setLogoPreview(currentSettings.restaurant_logo);
+      }
+    }
+  }, [currentSettings, authData?.restaurant?.name, restaurantForm]);
 
   // Update profile mutation
   const updateProfile = useMutation({
@@ -152,21 +175,55 @@ export default function SettingsForm() {
   const updateSettings = useMutation({
     mutationFn: async (data: RestaurantSettingsValues) => {
       if (!authData?.restaurant?.uuid) throw new Error('No restaurant UUID found');
-      const response = await apiClient.put(`/api/restaurants/${authData.restaurant.uuid}/settings/update/`, {
+      
+      // Format data for API
+      const formattedData = {
         show_name: data.show_name,
         show_logo: data.show_logo,
         restaurant_name: data.restaurant_name,
         restaurant_logo: data.restaurant_logo || null,
         add_tax: data.add_tax,
-        tax_percentage: data.tax_percentage,
+        tax_percentage: data.add_tax ? data.tax_percentage : null,
         add_vat: data.add_vat,
-        vat_percentage: data.vat_percentage,
+        vat_percentage: data.add_vat ? data.vat_percentage : null,
         table_capacity: data.table_capacity,
         menu_wallpaper: data.menu_wallpaper,
         text_color: data.text_color,
         background_opacity: data.background_opacity
-      });
+      };
+      
+      console.log('Sending settings data to API:', formattedData);
+      
+      const response = await apiClient.put(
+        `/api/restaurants/${authData.restaurant.uuid}/settings/update/`, 
+        formattedData
+      );
       return response.data;
+    },
+    onSuccess: (data) => {
+      console.log('Settings updated successfully:', data);
+      toast({
+        title: "Settings Updated",
+        description: "Restaurant settings have been updated successfully.",
+      });
+      
+      // Update local storage with new settings
+      const currentAuth = localStorage.getItem('auth');
+      if (currentAuth) {
+        const authData = JSON.parse(currentAuth);
+        if (authData.restaurant) {
+          authData.restaurant.settings = data;
+          localStorage.setItem('auth', JSON.stringify(authData));
+        }
+      }
+    },
+    onError: (error: any) => {
+      console.error('Failed to update settings:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update settings. Please try again.",
+      });
     }
   });
 
@@ -199,8 +256,17 @@ export default function SettingsForm() {
   };
 
   const onRestaurantSubmit = (data: RestaurantSettingsValues) => {
+    console.log('Submitting restaurant settings:', data);
     updateSettings.mutate(data);
   };
+
+  // Debug: Log current form values
+  useEffect(() => {
+    const subscription = restaurantForm.watch((value) => {
+      console.log("Current restaurant settings form values:", value);
+    });
+    return () => subscription.unsubscribe();
+  }, [restaurantForm]);
 
   return (
     <Card>
@@ -351,91 +417,91 @@ export default function SettingsForm() {
               />
             )}
 
-            <FormField
-              control={restaurantForm.control}
-              name="add_tax"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Add Tax</FormLabel>
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-4">Tax Settings</h3>
+              
+              <FormField
+                control={restaurantForm.control}
+                name="add_tax"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between mb-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Enable Tax</FormLabel>
+                    </div>
                     <FormControl>
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {restaurantForm.watch("add_tax") && (
-              <FormField
-                control={restaurantForm.control}
-                name="tax_percentage"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex justify-between items-center">
-                      <FormLabel>Tax Percentage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                          className="w-20"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
-
-            <FormField
-              control={restaurantForm.control}
-              name="add_vat"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Add VAT</FormLabel>
+              
+              {restaurantForm.watch("add_tax") && (
+                <FormField
+                  control={restaurantForm.control}
+                  name="tax_percentage"
+                  render={({ field }) => (
+                    <FormItem className="mb-4">
+                      <FormLabel>Tax Percentage (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Enter tax percentage"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value || 0}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              <FormField
+                control={restaurantForm.control}
+                name="add_vat"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between mb-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Enable VAT</FormLabel>
+                    </div>
                     <FormControl>
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {restaurantForm.watch("add_vat") && (
-              <FormField
-                control={restaurantForm.control}
-                name="vat_percentage"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex justify-between items-center">
-                      <FormLabel>VAT Percentage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                          className="w-20"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
+              
+              {restaurantForm.watch("add_vat") && (
+                <FormField
+                  control={restaurantForm.control}
+                  name="vat_percentage"
+                  render={({ field }) => (
+                    <FormItem className="mb-4">
+                      <FormLabel>VAT Percentage (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Enter VAT percentage"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value || 0}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             <FormField
               control={restaurantForm.control}

@@ -9,9 +9,9 @@ import { Suspense } from "react";
 
 export default function OwnerDashboardPage() {
   return (
-    <div>
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-start-1 col-end-9 mobile-md:col-end-13 space-y-4">
+    <div className="w-full">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-8 space-y-4">
           <MetricsCards />
           <Suspense fallback={<div>Loading sales chart...</div>}>
             <SalesChart />
@@ -19,7 +19,7 @@ export default function OwnerDashboardPage() {
           <RevenueStats />
         </div>
 
-        <div className="col-start-9 col-end-13  mobile-md:col-start-1 mobile-md:row-start-2 space-y-4">
+        <div className="md:col-span-4 space-y-4">
           <NetIncome />
           <SalesItems />
         </div>
